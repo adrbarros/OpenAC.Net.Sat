@@ -662,7 +662,30 @@ namespace OpenAC.Net.Sat.Demo
         private void imprimirExtratoCancelamentoToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (cfeAtual.IsNull() || cfeCancAtual.IsNull()) return;
-            extrato.ImprimirExtratoCancelamento(cfeAtual, cfeCancAtual);
+            var tipo = cmbExtrato.GetSelectedValue<TipoExtrato>();
+            switch (tipo)
+            {
+                case TipoExtrato.FastReport:
+                    if (extrato.Configuracoes.Filtro != FiltroDFeReport.Nenhum && extrato.Configuracoes.NomeArquivo.IsEmpty()) return;
+                    extrato.ImprimirExtratoCancelamento(cfeAtual, cfeCancAtual);
+
+                    if (extrato.Configuracoes.Filtro == FiltroDFeReport.Nenhum) return;
+                    MessageBox.Show(this, @"Extrato impresso com sucesso !", @"S@T Demo");
+                    break;
+
+                case TipoExtrato.EscPos:
+                    using (var posprinter = GetPosPrinter())
+                    {
+                        if (pctLogo.Image != null)
+                            escpos.Configuracoes.Logo = pctLogo.Image.ResizeImage(300, 300);
+                        escpos.Printer = posprinter;
+                        escpos.ImprimirExtratoCancelamento(cfeAtual, cfeCancAtual);
+                    }
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         private void consultarStatusOperacionalToolStripMenuItem_Click(object sender, EventArgs e)
